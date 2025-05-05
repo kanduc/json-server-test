@@ -30,13 +30,13 @@ jobs:
           install_components: 'gke-gcloud-auth-plugin'
 
       - name: Build Image
-        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }} .
+        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
 
       - name: Configure Docker Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
       - name: Push Artifactory Registry
-        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}
+        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
   deploy:
     name: Deploy Cloud Run
@@ -57,8 +57,8 @@ jobs:
 
       - name: Deploy Cloud Run
         run: |
-          gcloud run deploy json-server \
-            --image ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }} \
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
             --platform managed \
             --region ${{ env.REGION }} \
             --allow-unauthenticated
