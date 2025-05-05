@@ -1,0 +1,60 @@
+name: Pipeline CI/CD Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  SERVICE_NAME: ${{ github.event.repository.name }}
+
+jobs:
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Authenticate GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Google Account
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Build Image
+        run: docker build -t gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }} .
+
+      - name: Push GCR
+        run: docker push gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}
+
+  deploy:
+    name: Deploy Cloud Run
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Authenticate GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Google Account
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          install_components: 'gke-gcloud-auth-plugin'
+
+      - name: Deploy Cloud Run
+        run: |
+          gcloud run deploy json-server \
+            --image gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }} \
+            --platform managed \
+            --region us-central1 \
+            --allow-unauthenticated

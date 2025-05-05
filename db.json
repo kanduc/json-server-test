@@ -1,0 +1,13 @@
+{
+  "posts": [
+    { "id": "1", "title": "Mi primer Post!", "views": 100 },
+    { "id": "2", "title": "Post de noticias", "views": 200 }
+  ],
+  "comments": [
+    { "id": "1", "text": "Excelente Post!!!", "postId": "1" },
+    { "id": "2", "text": "Puedes agregar más detalle", "postId": "1" }
+  ],
+  "profile": {
+    "name": "typicode"
+  }
+}
