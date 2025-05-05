@@ -7,6 +7,7 @@ on:
 
 env:
   SERVICE_NAME: ${{ github.event.repository.name }}
+  REGION: us-central1
 
 jobs:
   build:
@@ -29,10 +30,13 @@ jobs:
           install_components: 'gke-gcloud-auth-plugin'
 
       - name: Build Image
-        run: docker build -t gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }} .
+        run: docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/docker-repo/${{ env.SERVICE_NAME }} .
 
-      - name: Push GCR
-        run: docker push gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }}
+      - name: Configure Docker Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+      - name: Push Artifactory Registry
+        run: docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/docker-repo/${{ env.SERVICE_NAME }}
 
   deploy:
     name: Deploy Cloud Run
@@ -54,7 +58,7 @@ jobs:
       - name: Deploy Cloud Run
         run: |
           gcloud run deploy json-server \
-            --image gcr.io/${{ secrets.GCP_PROJECT }}/${{ env.SERVICE_NAME }} \
+            --image ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/docker-repo/${{ env.SERVICE_NAME }} \
             --platform managed \
-            --region us-central1 \
+            --region ${{ env.REGION }} \
             --allow-unauthenticated
